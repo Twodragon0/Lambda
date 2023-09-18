@@ -47,7 +47,7 @@ def handle_session_manager_event(event):
             ]
         }
 
-        webhook_url = "https://hooks.slack.com/services/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"
+        webhook_url = "*"
 
         response = requests.post(
             webhook_url, data=json.dumps(slack_data),
