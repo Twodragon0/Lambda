@@ -12,9 +12,8 @@ h.setFormatter(logging.Formatter(FORMAT))
 logger.addHandler(h)
 logger.setLevel(logging.INFO)
 
-
+# Slack
 webhook_url = "*"
-
 
 def returnTime(eventTime):
     eventTime = eventTime.split("T")
@@ -57,7 +56,7 @@ def returnDescription(items):
     return des
  
  
-def push_To_Slack_SG_Change(event):
+def lambda_handler(event, context):
     # [*] AWS Security Group APIs
     # 1. CreateSecurityGroup - Create a SecurityGroup
     # 2. DeleteSecurityGroup - Delete a SecurityGroup
@@ -66,16 +65,14 @@ def push_To_Slack_SG_Change(event):
     # 5. RevokeSecurityGroupIngress - Remove an Inbound Rule
     # 6. RevokeSecurityGroupEgress - Remove an Outbound Rule
  
-
-    # Slack
     # Common Values
-    apiName = event['eventName']
-    accountId = event["userIdentity"]["accountId"]
-    apiTime = returnTime(event["eventTime"])
-    srcIp = event["sourceIPAddress"]
-    awsRegion = event["awsRegion"]
-    eventID = event["eventID"]
-    usrName = event["userIdentity"]["userName"]
+    apiName = event['detail']['eventName']
+    accountId = event['detail']["userIdentity"]["accountId"]
+    apiTime = returnTime(event['detail']["eventTime"])
+    sourceIP = event['detail']["sourceIPAddress"]
+    awsRegion = event['detail']["awsRegion"]
+    eventID = event['detail']["eventID"]
+    userName = event['detail']["userIdentity"]["userName"]
     consoleUrl = consoleUrlReturn(awsRegion,eventID)
 
 
@@ -83,8 +80,8 @@ def push_To_Slack_SG_Change(event):
 
     # CreateSecurityGroup
     if apiName == "CreateSecurityGroup":
-        sgID = event["responseElements"]["groupId"]
-        sgName = event["requestParameters"]["groupName"]
+        sgID = event['detail']["responseElements"]["groupId"]
+        sgName = event['detail']["requestParameters"]["groupName"]
 
         slackPayloads = {
             "attachments" : [
@@ -96,8 +93,8 @@ def push_To_Slack_SG_Change(event):
                         {"title" : "Event Name", "value" : apiName, "short" : True},
                         {"title" : "Account Id", "value" : accountId, "short" : True},
                         {"title" : "Event Time", "value" : apiTime, "short" : True},
-                        {"title" : "Source IP", "value" : srcIp, "short" : True},
-                        {"title" : "User Name", "value" : usrName, "short" : True},
+                        {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                        {"title" : "User Name", "value" : userName, "short" : True},
                         {"title" : "SG ID", "value" : sgID, "short" : True},
                         {"title" : "SG Name", "value" : sgName, "short" : True},
                         {"title" : "AWS Region", "value" : awsRegion, "short" : True}
@@ -111,7 +108,7 @@ def push_To_Slack_SG_Change(event):
 
     # DeleteSecurityGroup
     elif apiName == "DeleteSecurityGroup":
-        sgID = event["requestParameters"]["groupId"]
+        sgID = event['detail']["requestParameters"]["groupId"]
 
         slackPayloads = {
             "attachments" : [
@@ -123,8 +120,8 @@ def push_To_Slack_SG_Change(event):
                         {"title" : "Event Name", "value" : apiName, "short" : True},
                         {"title" : "Account Id", "value" : accountId, "short" : True},
                         {"title" : "Event Time", "value" : apiTime, "short" : True},
-                        {"title" : "Source IP", "value" : srcIp, "short" : True},
-                        {"title" : "User Name", "value" : usrName, "short" : True},
+                        {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                        {"title" : "User Name", "value" : userName, "short" : True},
                         {"title" : "SG ID", "value" : sgID, "short" : True},
                         {"title" : "AWS Region", "value" : awsRegion, "short" : True}
                     ],
@@ -137,11 +134,11 @@ def push_To_Slack_SG_Change(event):
 
     # AuthorizeSecurityGroupIngress              
     elif apiName == "AuthorizeSecurityGroupIngress":
-        sgID = event["requestParameters"]["groupId"]
+        sgID = event['detail']["requestParameters"]["groupId"]
         info = ""
 
-        if "items" in event['requestParameters']['ipPermissions']:
-            for i in event['requestParameters']['ipPermissions']['items']:
+        if "items" in event['detail']['requestParameters']['ipPermissions']:
+            for i in event['detail']['requestParameters']['ipPermissions']['items']:
                 if "fromPort" in i and "toPort" in i and i["fromPort"] == i["toPort"]:
                     port = str(i["toPort"])
                     ip, des = returnIpAddress(i)
@@ -166,8 +163,8 @@ def push_To_Slack_SG_Change(event):
                             {"title" : "Event Name", "value" : apiName, "short" : True},
                             {"title" : "Account Id", "value" : accountId, "short" : True},
                             {"title" : "Event Time", "value" : apiTime, "short" : True},
-                            {"title" : "Source IP", "value" : srcIp, "short" : True},
-                            {"title" : "User Name", "value" : usrName, "short" : True},
+                            {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                            {"title" : "User Name", "value" : userName, "short" : True},
                             {"title" : "AWS Region", "value" : awsRegion, "short" : True},
                             {"title" : "SG ID", "value" : sgID, "short" : True},
                             {"title" : "Information", "value" : info}
@@ -181,62 +178,58 @@ def push_To_Slack_SG_Change(event):
             pass
 
 
-
-        data = event
-        accountId = (data['userIdentity']['accountId'])
+        accountId = event['detail']['userIdentity']['accountId']
         #여기
-        Username = (data['userIdentity']['userName'])
-        sourceIP = (data['sourceIPAddress'])
-        awsRegion = (data['awsRegion'])
-        eventTime =(data['eventTime'])
+        userName = event['detail']['userIdentity']['userName']
+        sourceIP = event['detail']['sourceIPAddress']
+        awsRegion = event['detail']['awsRegion']
+        eventTime =(event['detail']['eventTime'])
         apiTime = returnTime(eventTime)
-        groupId = (data['requestParameters']['groupId'])
-        principalId = (data['userIdentity']['principalId'])
-        arn = (data['userIdentity']['arn'])
-        port = (data['requestParameters']['ipPermissions']['items'][0]['toPort'])
-        protocol = (data['requestParameters']['ipPermissions']['items'][0]['ipProtocol'])
-        ipv4 = (data['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['cidrIp'])
-        ipv6 = (data['requestParameters']['ipPermissions']['items'][0]['ipv6Ranges'])
+        groupId = (event['detail']['requestParameters']['groupId'])
+        principalId = (event['detail']['userIdentity']['principalId'])
+        arn = (event['detail']['userIdentity']['arn'])
+        port = (event['detail']['requestParameters']['ipPermissions']['items'][0]['toPort'])
+        protocol = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipProtocol'])
+        ipv4 = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['cidrIp'])
+        ipv6 = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipv6Ranges'])
 
         try:
-            description = (data['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['description'])
+            description = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['description'])
         except KeyError as e:
             description = "None"
         
-        IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, Username)
+        IP_Port_Checker(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, userName)
 
-
-        data = event
-        accountId = (data['userIdentity']['accountId'])
-        Username = (data['userIdentity']['userName'])
-        sourceIP = (data['sourceIPAddress'])
-        awsRegion = (data['awsRegion'])
-        eventTime =(data['eventTime'])
+        accountId = (event['detail']['userIdentity']['accountId'])
+        userName = (event['detail']['userIdentity']['userName'])
+        sourceIP = (event['detail']['sourceIPAddress'])
+        awsRegion = (event['detail']['awsRegion'])
+        eventTime =(event['detail']['eventTime'])
         apiTime = returnTime(eventTime)
-        groupId = (data['requestParameters']['groupId'])
-        principalId = (data['userIdentity']['principalId'])
-        arn = (data['userIdentity']['arn'])
-        toport = (data['requestParameters']['ipPermissions']['items'][0]['toPort'])
-        fromport = (data['requestParameters']['ipPermissions']['items'][0]['fromPort'])
-        protocol = (data['requestParameters']['ipPermissions']['items'][0]['ipProtocol'])
-        ipv4 = (data['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['cidrIp'])
-        ipv6 = (data['requestParameters']['ipPermissions']['items'][0]['ipv6Ranges'])
+        groupId = (event['detail']['requestParameters']['groupId'])
+        principalId = (event['detail']['userIdentity']['principalId'])
+        arn = (event['detail']['userIdentity']['arn'])
+        toport = (event['detail']['requestParameters']['ipPermissions']['items'][0]['toPort'])
+        fromport = (event['detail']['requestParameters']['ipPermissions']['items'][0]['fromPort'])
+        protocol = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipProtocol'])
+        ipv4 = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['cidrIp'])
+        ipv6 = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipv6Ranges'])
 
         try:
-            description = (data['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['description'])
+            description = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['description'])
         except KeyError as e:
             description = "None"
 
-        IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, Username)
+        IP_Port_Checker_zero(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, userName)
 
                
     # AuthorizeSecurityGroupEgress
     elif apiName == "AuthorizeSecurityGroupEgress":
-        sgID = event["requestParameters"]["groupId"]
+        sgID = event['detail']["requestParameters"]["groupId"]
         info = ""
 
-        if "items" in event['requestParameters']['ipPermissions']:
-            for i in event['requestParameters']['ipPermissions']['items']:
+        if "items" in event['detail']['requestParameters']['ipPermissions']:
+            for i in event['detail']['requestParameters']['ipPermissions']['items']:
                 if "fromPort" in i and "toPort" in i and i["fromPort"] == i["toPort"]:
                     port = str(i["toPort"])
                     ip, des = returnIpAddress(i)
@@ -259,8 +252,8 @@ def push_To_Slack_SG_Change(event):
                             {"title" : "Event Name", "value" : apiName, "short" : True},
                             {"title" : "Account Id", "value" : accountId, "short" : True},
                             {"title" : "Event Time", "value" : apiTime, "short" : True},
-                            {"title" : "Source IP", "value" : srcIp, "short" : True},
-                            {"title" : "User Name", "value" : usrName, "short" : True},
+                            {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                            {"title" : "User Name", "value" : userName, "short" : True},
                             {"title" : "AWS Region", "value" : awsRegion, "short" : True},
                             {"title" : "SG ID", "value" : sgID, "short" : True},
                             {"title" : "Information", "value" : info}
@@ -273,38 +266,37 @@ def push_To_Slack_SG_Change(event):
         else:
             pass
 
-        data = event
-        accountId = (data['userIdentity']['accountId'])
-        Username = (data['userIdentity']['userName'])
-        sourceIP = (data['sourceIPAddress'])
-        awsRegion = (data['awsRegion'])
-        eventTime =(data['eventTime'])
+        accountId = (event['detail']['userIdentity']['accountId'])
+        userName = (event['detail']['userIdentity']['userName'])
+        sourceIP = (event['detail']['sourceIPAddress'])
+        awsRegion = (event['detail']['awsRegion'])
+        eventTime =(event['detail']['eventTime'])
         apiTime = returnTime(eventTime)
-        groupId = (data['requestParameters']['groupId'])
-        principalId = (data['userIdentity']['principalId'])
-        arn = (data['userIdentity']['arn'])
-        toport = (data['requestParameters']['ipPermissions']['items'][0]['toPort'])
-        fromport = (data['requestParameters']['ipPermissions']['items'][0]['fromPort'])
-        protocol = (data['requestParameters']['ipPermissions']['items'][0]['ipProtocol'])
-        ipv4 = (data['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['cidrIp'])
-        ipv6 = (data['requestParameters']['ipPermissions']['items'][0]['ipv6Ranges'])
+        groupId = (event['detail']['requestParameters']['groupId'])
+        principalId = (event['detail']['userIdentity']['principalId'])
+        arn = (event['detail']['userIdentity']['arn'])
+        toport = (event['detail']['requestParameters']['ipPermissions']['items'][0]['toPort'])
+        fromport = (event['detail']['requestParameters']['ipPermissions']['items'][0]['fromPort'])
+        protocol = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipProtocol'])
+        ipv4 = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['cidrIp'])
+        ipv6 = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipv6Ranges'])
 
         try:
-            description = (data['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['description'])
+            description = (event['detail']['requestParameters']['ipPermissions']['items'][0]['ipRanges']['items'][0]['description'])
         except KeyError as e:
             description = "None"
 
-        IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, Username)
+        IP_Port_Checker_zero(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, userName)
 
 
     # RevokeSecurityGroupIngress
     elif apiName == "RevokeSecurityGroupIngress":
-        sgID = event["requestParameters"]["groupId"]
+        sgID = event['detail']["requestParameters"]["groupId"]
         info = ""
 
 
-        if "items" in event['requestParameters']['ipPermissions']:
-            for i in event['requestParameters']['ipPermissions']['items']:
+        if "items" in event['detail']['requestParameters']['ipPermissions']:
+            for i in event['detail']['requestParameters']['ipPermissions']['items']:
                 if "fromPort" in i and "toPort" in i and i["fromPort"] == i["toPort"]:
                     port = str(i["toPort"])
                     ip, des = returnIpAddress(i)
@@ -327,8 +319,8 @@ def push_To_Slack_SG_Change(event):
                             {"title" : "Event Name", "value" : apiName, "short" : True},
                             {"title" : "Account Id", "value" : accountId, "short" : True},
                             {"title" : "Event Time", "value" : apiTime, "short" : True},
-                            {"title" : "Source IP", "value" : srcIp, "short" : True},
-                            {"title" : "User Name", "value" : usrName, "short" : True},
+                            {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                            {"title" : "User Name", "value" : userName, "short" : True},
                             {"title" : "AWS Region", "value" : awsRegion, "short" : True},
                             {"title" : "SG ID", "value" : sgID, "short" : True},
                             {"title" : "Information", "value" : info}
@@ -343,7 +335,7 @@ def push_To_Slack_SG_Change(event):
             sgrID_pool = ''
             try:
                 for i in range(0, 64):
-                    sgrID_pool = event['requestParameters']['securityGroupRuleIds']['items'][i]['securityGroupRuleId']
+                    sgrID_pool = event['detail']['requestParameters']['securityGroupRuleIds']['items'][i]['securityGroupRuleId']
                     sgrID = '' + sgrID + " " + sgrID_pool
             except IndexError:
                 pass
@@ -358,8 +350,8 @@ def push_To_Slack_SG_Change(event):
                             {"title" : "Event Name", "value" : apiName, "short" : True},
                             {"title" : "Account Id", "value" : accountId, "short" : True},
                             {"title" : "Event Time", "value" : apiTime, "short" : True},
-                            {"title" : "Source IP", "value" : srcIp, "short" : True},
-                            {"title" : "User Name", "value" : usrName, "short" : True},
+                            {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                            {"title" : "User Name", "value" : userName, "short" : True},
                             {"title" : "AWS Region", "value" : awsRegion, "short" : True},
                             {"title" : "SG ID", "value" : sgID, "short" : True},
                             {"title" : "Information", "value" : info}
@@ -373,12 +365,12 @@ def push_To_Slack_SG_Change(event):
 
     # RevokeSecurityGroupEgress
     elif apiName == "RevokeSecurityGroupEgress":
-        sgID = event["requestParameters"]["groupId"]
+        sgID = event['detail']["requestParameters"]["groupId"]
         info = ""
 
 
-        if "items" in event['requestParameters']['ipPermissions']:
-            for i in event['requestParameters']['ipPermissions']['items']:
+        if "items" in event['detail']['requestParameters']['ipPermissions']:
+            for i in event['detail']['requestParameters']['ipPermissions']['items']:
                 if "fromPort" in i:
                     if i["fromPort"] == i["toPort"]:
                         port = str(i["toPort"])
@@ -402,8 +394,8 @@ def push_To_Slack_SG_Change(event):
                                     {"title" : "Event Name", "value" : apiName, "short" : True},
                                     {"title" : "Account Id", "value" : accountId, "short" : True},
                                     {"title" : "Event Time", "value" : apiTime, "short" : True},
-                                    {"title" : "Source IP", "value" : srcIp, "short" : True},
-                                    {"title" : "User Name", "value" : usrName, "short" : True},
+                                    {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                                    {"title" : "User Name", "value" : userName, "short" : True},
                                     {"title" : "AWS Region", "value" : awsRegion, "short" : True},
                                     {"title" : "SG ID", "value" : sgID, "short" : True},
                                 {"title" : "Information", "value" : info}
@@ -420,7 +412,7 @@ def push_To_Slack_SG_Change(event):
             sgrID_pool = ''
             try:
                 for i in range(0, 64):
-                    sgrID_pool = event['requestParameters']['securityGroupRuleIds']['items'][i]['securityGroupRuleId']
+                    sgrID_pool = event['detail']['requestParameters']['securityGroupRuleIds']['items'][i]['securityGroupRuleId']
                     sgrID = '' + sgrID + " " + sgrID_pool
             except IndexError:
                 pass
@@ -437,8 +429,8 @@ def push_To_Slack_SG_Change(event):
                             {"title" : "Event Name", "value" : apiName, "short" : True},
                             {"title" : "Account Id", "value" : accountId, "short" : True},
                             {"title" : "Event Time", "value" : apiTime, "short" : True},
-                            {"title" : "Source IP", "value" : srcIp, "short" : True},
-                            {"title" : "User Name", "value" : usrName, "short" : True},
+                            {"title" : "Source IP", "value" : sourceIP, "short" : True},
+                            {"title" : "User Name", "value" : userName, "short" : True},
                             {"title" : "AWS Region", "value" : awsRegion, "short" : True},
                             {"title" : "SG ID", "value" : sgID, "short" : True},
                             {"title" : "Information", "value" : info}
@@ -451,18 +443,16 @@ def push_To_Slack_SG_Change(event):
 
 
 
-# 여기서부터 수정
-
     # ModifySecurityGroupRules
     elif apiName == "ModifySecurityGroupRules":
-        sgID = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["GroupId"]
-        sgrID = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRuleId"]
-        CidrIpv4 = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["CidrIpv4"]
-        FromPort = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["FromPort"]
-        ToPort = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["ToPort"]
-        IpProtocol = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["IpProtocol"]
+        sgID = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["GroupId"]
+        sgrID = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRuleId"]
+        CidrIpv4 = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["CidrIpv4"]
+        FromPort = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["FromPort"]
+        ToPort = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["ToPort"]
+        IpProtocol = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["IpProtocol"]
         try:
-            Description = event["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["Description"]
+            Description = event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["Description"]
         except KeyError as e:
             Description = "None"
 
@@ -480,8 +470,8 @@ def push_To_Slack_SG_Change(event):
                         {"title" : "Event Name", "value" : apiName, "short" : True},
                         {"title" : "Account Id", "value" : accountId, "short" : True},
                         {"title" : "Event Time", "value" : apiTime, "short" : True},
-                        {"title" : "Target IP", "value" : srcIp, "short" : True},
-                        {"title" : "User Name", "value" : usrName, "short" : True},
+                        {"title" : "Target IP", "value" : sourceIP, "short" : True},
+                        {"title" : "User Name", "value" : userName, "short" : True},
                         {"title" : "SG ID", "value" : sgID, "short" : True},
                         {"title" : "SGR ID", "value" : sgrID, "short" : True},
                         {"title" : "AWS Region", "value" : awsRegion, "short" : True},
@@ -494,61 +484,49 @@ def push_To_Slack_SG_Change(event):
         }
     
 
-
-
-
-
-
-        data = event
-        accountId = (data['userIdentity']['accountId'])
-        Username = (data['userIdentity']['userName'])
-        sourceIP = (data['sourceIPAddress'])
-        awsRegion = (data['awsRegion'])
-        eventTime =(data['eventTime'])
+        accountId = (event['detail']['userIdentity']['accountId'])
+        userName = (event['detail']['userIdentity']['userName'])
+        sourceIP = (event['detail']['sourceIPAddress'])
+        awsRegion = (event['detail']['awsRegion'])
+        eventTime =(event['detail']['eventTime'])
         apiTime = returnTime(eventTime)
-        groupId = (data["requestParameters"]["ModifySecurityGroupRulesRequest"]["GroupId"])
-        principalId = (data['userIdentity']['principalId'])
-        arn = (data['userIdentity']['arn'])
-        toport = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['ToPort'])
-        fromport = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['FromPort'])
-        protocol = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['IpProtocol'])
-        ipv4 = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['CidrIpv4'])
+        groupId = (event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["GroupId"])
+        principalId = (event['detail']['userIdentity']['principalId'])
+        arn = (event['detail']['userIdentity']['arn'])
+        toport = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['ToPort'])
+        fromport = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['FromPort'])
+        protocol = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['IpProtocol'])
+        ipv4 = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['CidrIpv4'])
         ipv6 = "None"
 
         try:
-            description = (data["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["Description"])
+            description = (event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["Description"])
         except KeyError as e:
             description = "None"
 
-        IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, Username)
+        IP_Port_Checker_zero(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, userName)
 
 
-
-
-
-
-
-        data = event
-        accountId = (data['userIdentity']['accountId'])
-        Username = (data['userIdentity']['userName'])
-        sourceIP = (data['sourceIPAddress'])
-        awsRegion = (data['awsRegion'])
-        eventTime =(data['eventTime'])
+        accountId = (event['detail']['userIdentity']['accountId'])
+        userName = (event['detail']['userIdentity']['userName'])
+        sourceIP = (event['detail']['sourceIPAddress'])
+        awsRegion = (event['detail']['awsRegion'])
+        eventTime =(event['detail']['eventTime'])
         apiTime = returnTime(eventTime)
-        groupId = (data["requestParameters"]["ModifySecurityGroupRulesRequest"]["GroupId"])
-        principalId = (data['userIdentity']['principalId'])
-        arn = (data['userIdentity']['arn'])
-        port = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['ToPort'])
-        protocol = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['IpProtocol'])
-        ipv4 = (data['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['CidrIpv4'])
+        groupId = (event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["GroupId"])
+        principalId = (event['detail']['userIdentity']['principalId'])
+        arn = (event['detail']['userIdentity']['arn'])
+        port = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['ToPort'])
+        protocol = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['IpProtocol'])
+        ipv4 = (event['detail']['requestParameters']['ModifySecurityGroupRulesRequest']['SecurityGroupRule']['SecurityGroupRule']['CidrIpv4'])
         ipv6 = "None"
 
         try:
-            description = (data["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["Description"])
+            description = (event['detail']["requestParameters"]["ModifySecurityGroupRulesRequest"]["SecurityGroupRule"]["SecurityGroupRule"]["Description"])
         except KeyError as e:
             description = "None"
         
-        IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, Username)
+        IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, userName)
 
 
 
@@ -564,7 +542,7 @@ def push_To_Slack_SG_Change(event):
 
  
 
-def IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, Username):
+def IP_Port_Checker(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, userName):
     # if 'oneid' in arn:
     #     Username = principalId.split(':')[1]
     # else:
@@ -572,10 +550,10 @@ def IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiT
     username = username_imsi.split('@')[0]
 
 
-    #notice = ("<@>님, 계정 리전의 에 대해 삭제 혹은 출발지 지정 바랍니다." .format(Username, accountId_list.accountId_find(accountId), awsRegion, groupId))
+    #.format(Username, accountId_list.accountId_find(accountId), awsRegion, groupId))
     if (port not in [80, 443, 8080, ]):
         if (ipv4 == '0.0.0.0/0' or ipv6 =='::/0' in ipv4):
-            srcip = '0.0.0.0/0'
+            sourceIP = '0.0.0.0/0'
             Message_data = {
    "blocks": [
       {
@@ -595,7 +573,7 @@ def IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiT
             },
             {
                "type": "mrkdwn",
-               "text": f"*UserID*\n{Username}"
+               "text": f"*UserID*\n{userName}"
             }
          ]
       },
@@ -636,7 +614,7 @@ def IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiT
          "type": "section",
          "text": {
             "type": "mrkdwn",
-            "text": f"@{username}, \n 이벤트 확인 후 해당 Rule 삭제 혹은 출발지 지정 부탁 드립니다. \n 요청에 의한 오픈인 경우, 완료 이모지 부탁 드립니다. (ModifyS/G Outbound는 오탐있음) \n"         } 
+            "text": f"@{userName}, \n 이벤트 확인 후 해당 Rule 삭제 혹은 출발지 지정 부탁 드립니다. \n 요청에 의한 오픈인 경우, 완료 이모지 부탁 드립니다. (ModifyS/G Outbound는 오탐있음) \n"         } 
       }
    ]
 }
@@ -654,14 +632,14 @@ def IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiT
 
 
 
-def IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, Username):
+def IP_Port_Checker_zero(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, toport, fromport, description, ipv4, ipv6, userName):
     # if 'oneid' in arn:
     #     Username = principalId.split(':')[1]
     # else:
     username_imsi = arn.split('/')[1]
     username = username_imsi.split('@')[0]
  
-    #notice = ("<@>님, 계정 리전의 에 대해 삭제 혹은 출발지 지정 바랍니다." .format(Username, accountId_list.accountId_find(accountId), awsRegion, groupId))
+    #.format(Username, accountId_list.accountId_find(accountId), awsRegion, groupId))
     if (fromport == 0 or toport == 0):
  
         Message_data = {
@@ -683,7 +661,7 @@ def IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion,
                 },
                 {
                     "type": "mrkdwn",
-                    "text": f"*UserID*\n{Username}"
+                    "text": f"*UserID*\n{userName}"
                 }
             ]
         },
@@ -724,7 +702,7 @@ def IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion,
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"@{username}, \n 이벤트 확인 후 해당 Rule의 포트 재지정 부탁 드립니다. \n 확인이 끝난 경우 완료 이모지 부탁 드립니다."
+                "text": f"@{userName}, \n 이벤트 확인 후 해당 Rule의 포트 재지정 부탁 드립니다. \n 확인이 끝난 경우 완료 이모지 부탁 드립니다."
             }
         }
     ]
@@ -736,10 +714,3 @@ def IP_Port_Checker_zero(data, arn, principalId, accountId, sourceIP, awsRegion,
 
 def Send_Message(slack_message):
     req = requests.post(webhook_url, data = json.dumps(slack_message), headers={'Content-Type': 'application/json'})
-
- 
-def lambda_handler(event, context):
-    return push_To_Slack_SG_Change(event['detail'])
- 
-if __name__ == '__main__':
-    lambda_handler(None, None)
