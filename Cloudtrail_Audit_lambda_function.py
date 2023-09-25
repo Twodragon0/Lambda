@@ -121,7 +121,6 @@ def signInDruingNotWorikingTime(rawData, subject):
     )    
 
     #change the subject to directly notify the user 
-    #slackPayloads["attachments"][0]["pretext"] = "*Not During the working hours, the improper login was found.*\n*If it is not proper access, please send a message to \"701_보안스트림_소통방\" at Slack immediately.*"
     slackPayloads["attachments"][0]["pretext"] = "*업무시간 외 AWS 로그인이 확인되었습니다.*\n*본인이 로그인한 것이 아니라면 \"\"으로 즉시 신고 부탁드립니다.*"
     
     
