@@ -1,0 +1,22 @@
+{
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Effect": "Deny",
+         "Action": [
+            "ssm:StartSession",
+            "ssm:SendCommand"
+         ],
+         "Resource": "*",
+         "Condition": {
+            "ArnLike": {
+               "aws:PrincipalArn": [
+                  "arn:aws:iam::(account-ID):user/*",
+                  "arn:aws:iam::(account-ID):group/*",
+                  "arn:aws:iam::(account-ID):role/*"
+               ]
+            }
+         }
+      }
+   ]
+}
