@@ -1,0 +1,38 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:StartSession",
+                "ssm:SendCommand" 
+            ],
+            "Resource": [
+                "arn:aws:ec2:region:account-id:instance/instance-id",
+                "arn:aws:ssm:region:account-id:document/SSM-SessionManagerRunShell" 
+            ],
+            "Condition": {
+                "BoolIfExists": {
+                    "ssm:SessionDocumentAccessCheck": "true" 
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:TerminateSession",
+                "ssm:ResumeSession"
+            ],
+            "Resource": [
+                "arn:aws:ssm:*:*:session/${aws:userid}-*"
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kms:GenerateDataKey" 
+            ],
+            "Resource": "key-name"
+        }
+    ]
+}
