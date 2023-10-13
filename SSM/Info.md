@@ -50,6 +50,7 @@ This will provide the ability to manage and control instances efficiently and se
    - [DHMC Configuration](https://aws.amazon.com/ko/blogs/mt/enable-management-of-your-amazon-ec2-instances-in-aws-systems-manager-using-default-host-management-configuration/)
 
    - Additional Permissions Required: [IAM Instance Profile Creation](https://docs.aws.amazon.com/systems-manager/latest/userguide/getting-started-create-iam-instance-profile.html#create-iam-instance-profile-ssn-logging)
+   -  [IAM policy as an example](https://github.com/Twodragon0/Lambda/blob/7adbfc226d26f3c53b1060d22271cd17efd16f57/SSM/IAM_policy.json)
 
 4. **Considerations:**
 
@@ -63,6 +64,7 @@ This will provide the ability to manage and control instances efficiently and se
 ### SCP (Service Control Policy) :
 
    - Deny SSM actions (such as `StartSession` and `SendCommand`) for all IAM entities except for system-specific IAM entities.
+   - [Example SCP Policy] (https://github.com/Twodragon0/Lambda/blob/7adbfc226d26f3c53b1060d22271cd17efd16f57/SSM/SCP_Policy.json)
 
 ### Session Encryption (KMS):
 
