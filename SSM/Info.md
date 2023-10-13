@@ -1,113 +1,72 @@
-Information Paper: SSM Implementation and Security Measures on GitHub
-1. Overview
-This document outlines the plan for implementing Amazon System Manager (SSM) and associated security measures. The objective is to enhance the security and operational capabilities of AWS instances by installing the Amazon SSM agent. 
-This will provide the ability to manage and control instances efficiently and securely.
+# Repository Information
 
-2. Background Knowledge
-Understanding of Amazon Web Services (AWS) infrastructure and IAM roles.
-Familiarity with AWS Key Management Service (KMS) encryption.
-Knowledge of SCP (Service Control Policy) and IAM policies.
-Experience with AWS CloudTrail for monitoring and auditing.
-Event Bridge usage for auditing and monitoring.
+This repository contains information related to the implementation of Amazon Systems Manager (SSM) on AWS and the associated security measures.
 
+## Contents
 
-3. Usage Plan
-Purpose:
-Provide an alternative access method to instances when SSH or hardware issues arise.
-Facilitate infrastructure vulnerability scanning through Run Command, replacing traditional methods like Ansible.
-Serve as a potential hardware replacement solution.
-Implementation Plan:
-Install the Amazon SSM agent (version 3.2.582.0 or later) on all instances that require SSH access using Ansible.
+- [Overview](#overview)
+- [Background Knowledge](#background-knowledge)
+- [Usage Plans](#usage-plans)
+- [Security Measures](#security-measures)
 
-Configure Session Manager Preferences:
+## Overview
 
-Enable KMS encryption.
-Utilize Session Manager with Custom Managed Keys (CMK).
-Enable S3 and CloudTrail logging.
-Set the default shell profile to /bin/bash (recommended), as the default shell is /bin/sh.
-Grant the necessary IAM roles or configure DHMC (Default Host Management Configuration) settings for instances. This allows SSM Control and Data Channel to be opened for run commands and session initiation. DHMC settings can be applied through Session Manager basic IAM role configuration.
+This document provides insights into the usage plans and security measures concerning the adoption of Amazon Systems Manager (SSM). The primary motivation behind this implementation is to replace 'login_duo' for SSH access and to facilitate secure management and maintenance of AWS instances.
 
-Reference: Amazon DHMC Configuration Guide
-Additional permissions required: Create IAM Instance Profile for SSM Logging
+## Background Knowledge
 
-Configure IAM permissions for users who will run commands and initiate sessions. Use the following IAM policy as an example:
+(Add any relevant background knowledge or context here.)
 
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:StartSession",
-                "ssm:SendCommand" 
-            ],
-            "Resource": [
-                "arn:aws:ec2:region:account-id:instance/instance-id",
-                "arn:aws:ssm:region:account-id:document/SSM-SessionManagerRunShell" 
-            ],
-            "Condition": {
-                "BoolIfExists": {
-                    "ssm:SessionDocumentAccessCheck": "true" 
-                }
-            }
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:TerminateSession",
-                "ssm:ResumeSession"
-            ],
-            "Resource": [
-                "arn:aws:ssm:*:*:session/${aws:userid}-*"
-            }
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "kms:GenerateDataKey" 
-            ],
-            "Resource": "key-name"
-        }
-    ]
-}
+## Usage Plans
 
-Reference: Restricting User Access to SSM
+### Purpose
 
-Execute Run Command to remove DUO authentication as required.
+- Serve as an alternative server access method for instances, especially in the event of SSH or hardware failures.
+- Enable infrastructure vulnerability scans through the execution of run commands, thus replacing the need for Ansible.
+- Prepare for the potential role of hardware replacement.
 
-Consider using SSM sessions for hardware replacement and other management tasks.
+### Usage Plan
 
-4. Security Measures
-Service Control Policy (SCP):
+1. **Installation of `amazon-ssm-agent`:** Install the `amazon-ssm-agent` on all instances requiring SSH access using Ansible. Ensure that the agent version is 3.2.582.0 or later.
 
-Apply a policy that denies SSM actions (StartSession, SendCommand) for all IAM entities except those designed for system use. This helps restrict unauthorized access to SSM functionality.
-Example SCP Policy:
+2. **Session Manager Preferences Setting:**
 
-{
-   "Version": "2012-10-17",
-   "Statement": [
-      {
-         "Effect": "Deny",
-         "Action": [
-            "ssm:StartSession",
-            "ssm:SendCommand"
-         ],
-         "Resource": "*",
-         "Condition": {
-            "ArnLike": {
-               "aws:PrincipalArn": [
-                  "arn:aws:iam::(account-ID):user/*",
-                  "arn:aws:iam::(account-ID):group/*",
-                  "arn:aws:iam::(account-ID):role/*"
-               ]
-            }
-         }
-      }
-   ]
-}
+   - **KMS Encryption:** Enable KMS encryption using a Session Manager-specific Customer Master Key (CMK).
+   - **S3 Logging:** Activate S3 logging.
+   - **CloudTrail Logging:** Enable CloudTrail logging.
+   - **Shell Profile:** Use `/bin/bash` as the recommended shell profile, with `/bin/sh` as the default shell.
 
-This policy denies SSM actions (such as session creation and command execution) for all IAM entities except for system-related IAM entities.
+3. **IAM Role or DHMC Configuration for Target Instances:**
 
-Session Encryption (KMS): Implement KMS encryption for session data. [Reference Documentation: Using Parameter Store]
+   - To enable SSM Control and Data Channel on target instances for run command and session initiation, ensure that the instance's IAM role has the `AmazonSSMManagedInstanceCore` role or follow the DHMC (Default Host Management Configuration) settings for the necessary permissions.
 
-Session Logging and Monitoring: Enable session logging and monitoring to ensure access control and audit trails. [Reference Documentation: Monitoring CloudTrail Logs]. Consider using Event Bridge for audit monitoring and sending logs to Slack for review.
+   - [DHMC Configuration](https://aws.amazon.com/ko/blogs/mt/enable-management-of-your-amazon-ec2-instances-in-aws-systems-manager-using-default-host-management-configuration/)
+
+   - Additional Permissions Required: [IAM Instance Profile Creation](https://docs.aws.amazon.com/systems-manager/latest/userguide/getting-started-create-iam-instance-profile.html#create-iam-instance-profile-ssn-logging)
+
+4. **Considerations:**
+
+   - Ensure that the `amazon-ssm-agent` version is 3.2.582.0 or higher.
+   - IMDSv2 should be optional or required for the instances.
+   - Due to AWS GUI limitations, configurations need to be made via the AWS CLI if using Systems Manager > Fleet Manager.
+   - When KMS encryption is enabled, make sure to grant the necessary `kms:Decrypt` permissions.
+
+## Security Measures
+
+1. **SCP (Service Control Policy)**
+
+   - Deny SSM actions (such as `StartSession` and `SendCommand`) for all IAM entities except for system-specific IAM entities.
+
+2. **Session Encryption (KMS)**
+
+   - Utilize AWS Key Management Service (KMS) for session encryption.
+
+3. **Session Logging and Monitoring**
+
+   - Set up monitoring for SSM actions, including `StartSession` and `RunCommand`, through Event Bridge.
+   - Implement a log forwarding mechanism to send logs to Slack or other monitoring tools.
+
+## Author
+
+(Include your name or the author's name here, if applicable.)
+
