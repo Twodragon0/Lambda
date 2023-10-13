@@ -25,7 +25,7 @@ def returnTime(eventTime):
      
     return str(ret_time)
  
-def consoleUrlReturn(awsRegion, eventID):
+def consoleUrlReturn(awsRegion,eventID):
     url = "https://ap-northeast-2.console.aws.amazon.com/cloudtrail/home?region="
     consoleUrl = url + awsRegion + "#/events?EventId=" + eventID
     return consoleUrl
