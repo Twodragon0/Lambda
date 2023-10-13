@@ -11,19 +11,26 @@ This repository contains information related to the implementation of Amazon Sys
 
 ## Overview
 
-This document provides insights into the usage plans and security measures concerning the adoption of Amazon Systems Manager (SSM). The primary motivation behind this implementation is to replace 'login_duo' for SSH access and to facilitate secure management and maintenance of AWS instances.
+This document outlines the plan for implementing Amazon System Manager (SSM) and associated security measures. 
+The objective is to enhance the security and operational capabilities of AWS instances by installing the Amazon SSM agent. 
+This will provide the ability to manage and control instances efficiently and securely.
+
 
 ## Background Knowledge
 
-(Add any relevant background knowledge or context here.)
+- Understanding of Amazon Web Services (AWS) infrastructure and IAM roles.
+- Familiarity with AWS Key Management Service (KMS) encryption.
+- Knowledge of SCP (Service Control Policy) and IAM policies.
+- Experience with AWS CloudTrail for monitoring and auditing.
+- Event Bridge usage for auditing and monitoring.
 
 ## Usage Plans
 
-### Purpose
+### Purpose:
 
-- Serve as an alternative server access method for instances, especially in the event of SSH or hardware failures.
-- Enable infrastructure vulnerability scans through the execution of run commands, thus replacing the need for Ansible.
-- Prepare for the potential role of hardware replacement.
+- Provide an alternative access method to instances when SSH or hardware issues arise.
+- Facilitate infrastructure vulnerability scanning through Run Command, replacing traditional methods like Ansible.
+- Serve as a potential hardware replacement solution.
 
 ### Usage Plan
 
@@ -53,18 +60,23 @@ This document provides insights into the usage plans and security measures conce
 
 ## Security Measures
 
-1. **SCP (Service Control Policy)**
+### SCP (Service Control Policy) :
 
    - Deny SSM actions (such as `StartSession` and `SendCommand`) for all IAM entities except for system-specific IAM entities.
 
-2. **Session Encryption (KMS)**
+### Session Encryption (KMS):
 
-   - Utilize AWS Key Management Service (KMS) for session encryption.
+- Implement KMS encryption for session data.
 
-3. **Session Logging and Monitoring**
+- **Reference Documentation:** [Using Parameter Store](https://docs.aws.amazon.com/ko_kr/kms/latest/developerguide/services-parameter-store.html)
 
-   - Set up monitoring for SSM actions, including `StartSession` and `RunCommand`, through Event Bridge.
-   - Implement a log forwarding mechanism to send logs to Slack or other monitoring tools.
+### Session Logging and Monitoring:
+
+- Enable session logging and monitoring to ensure access control and audit trails.
+
+- **Reference Documentation:** [Monitoring CloudTrail Logs](https://docs.aws.amazon.com/systems-manager/latest/userguide/monitoring-cloudtrail-logs.html)
+
+- Consider using Event Bridge for audit monitoring and sending logs to Slack for review.
 
 ## Author
 
