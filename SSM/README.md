@@ -1,31 +1,113 @@
-# Project Overview
+Information Paper: SSM Implementation and Security Measures on GitHub
+1. Overview
+This document outlines the plan for implementing Amazon System Manager (SSM) and associated security measures. The objective is to enhance the security and operational capabilities of AWS instances by installing the Amazon SSM agent. 
+This will provide the ability to manage and control instances efficiently and securely.
 
-This repository provides detailed information about two distinct projects, each focusing on specific AWS-related tasks and security measures. Please refer to the following sections for a quick overview of each project.
+2. Background Knowledge
+Understanding of Amazon Web Services (AWS) infrastructure and IAM roles.
+Familiarity with AWS Key Management Service (KMS) encryption.
+Knowledge of SCP (Service Control Policy) and IAM policies.
+Experience with AWS CloudTrail for monitoring and auditing.
+Event Bridge usage for auditing and monitoring.
 
-## Project 1: AWS API Real-time Monitoring
 
-Project 1 aims to enhance security and real-time monitoring of key AWS activities. It focuses on monitoring AWS operations performed via APIs and auditing corresponding CloudTrail logs. The project includes the following key components:
+3. Usage Plan
+Purpose:
+Provide an alternative access method to instances when SSH or hardware issues arise.
+Facilitate infrastructure vulnerability scanning through Run Command, replacing traditional methods like Ansible.
+Serve as a potential hardware replacement solution.
+Implementation Plan:
+Install the Amazon SSM agent (version 3.2.582.0 or later) on all instances that require SSH access using Ansible.
 
-- **Monitoring Flowchart**: Visual representation of the monitoring process.
-- **Monitoring Description**: An explanation of how monitoring works, including the flow of logs from AWS services to CloudWatch and Lambda.
-- **Monitored Targets**: A list of AWS events and actions monitored, including security group configuration changes and KMS key actions.
-- **CloudWatch Events**: Details about CloudWatch Events for specific event patterns.
-- **Lambda Source Code**: Access to the Lambda functions used for forwarding audit-related events.
+Configure Session Manager Preferences:
 
-For installation and configuration instructions, please refer to the [API-Monitor Guide.md](https://github.com/Twodragon0/Lambda/blob/main/AWS-API-Monitor/README.md).
+Enable KMS encryption.
+Utilize Session Manager with Custom Managed Keys (CMK).
+Enable S3 and CloudTrail logging.
+Set the default shell profile to /bin/bash (recommended), as the default shell is /bin/sh.
+Grant the necessary IAM roles or configure DHMC (Default Host Management Configuration) settings for instances. This allows SSM Control and Data Channel to be opened for run commands and session initiation. DHMC settings can be applied through Session Manager basic IAM role configuration.
 
-## Project 2: Amazon Systems Manager (SSM) Implementation
+Reference: Amazon DHMC Configuration Guide
+Additional permissions required: Create IAM Instance Profile for SSM Logging
 
-Project 2 focuses on implementing Amazon Systems Manager (SSM) on AWS for efficient instance management and enhanced security. The project includes the following key components:
+Configure IAM permissions for users who will run commands and initiate sessions. Use the following IAM policy as an example:
 
-- **Overview**: An introduction to the purpose and goals of implementing Amazon SSM.
-- **Background Knowledge**: Prerequisite knowledge required for implementing SSM, including AWS infrastructure, IAM roles, KMS encryption, and CloudTrail usage.
-- **Usage Plans**: A detailed plan for installing the Amazon SSM agent on AWS instances and ensuring secure and efficient management. This includes recommendations for IAM roles and security policies.
-- **Security Measures**: Information about implementing security measures, including Service Control Policies (SCP), session encryption, and session logging and monitoring.
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:StartSession",
+                "ssm:SendCommand" 
+            ],
+            "Resource": [
+                "arn:aws:ec2:region:account-id:instance/instance-id",
+                "arn:aws:ssm:region:account-id:document/SSM-SessionManagerRunShell" 
+            ],
+            "Condition": {
+                "BoolIfExists": {
+                    "ssm:SessionDocumentAccessCheck": "true" 
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ssm:TerminateSession",
+                "ssm:ResumeSession"
+            ],
+            "Resource": [
+                "arn:aws:ssm:*:*:session/${aws:userid}-*"
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "kms:GenerateDataKey" 
+            ],
+            "Resource": "key-name"
+        }
+    ]
+}
 
-For installation and usage instructions, please refer to the [Lambda for SSM Guide.md](https://github.com/Twodragon0/Lambda/blob/main/SSM/README.md).
+Reference: Restricting User Access to SSM
 
-## Author
+Execute Run Command to remove DUO authentication as required.
 
-This repository is maintained by @twodragon. For questions or further assistance, please reach out to the author.
+Consider using SSM sessions for hardware replacement and other management tasks.
 
+4. Security Measures
+Service Control Policy (SCP):
+
+Apply a policy that denies SSM actions (StartSession, SendCommand) for all IAM entities except those designed for system use. This helps restrict unauthorized access to SSM functionality.
+Example SCP Policy:
+
+{
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Effect": "Deny",
+         "Action": [
+            "ssm:StartSession",
+            "ssm:SendCommand"
+         ],
+         "Resource": "*",
+         "Condition": {
+            "ArnLike": {
+               "aws:PrincipalArn": [
+                  "arn:aws:iam::(account-ID):user/*",
+                  "arn:aws:iam::(account-ID):group/*",
+                  "arn:aws:iam::(account-ID):role/*"
+               ]
+            }
+         }
+      }
+   ]
+}
+
+This policy denies SSM actions (such as session creation and command execution) for all IAM entities except for system-related IAM entities.
+
+Session Encryption (KMS): Implement KMS encryption for session data. [Reference Documentation: Using Parameter Store]
+
+Session Logging and Monitoring: Enable session logging and monitoring to ensure access control and audit trails. [Reference Documentation: Monitoring CloudTrail Logs]. Consider using Event Bridge for audit monitoring and sending logs to Slack for review.
