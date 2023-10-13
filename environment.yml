@@ -1,0 +1,6 @@
+name: myenv
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  # Add other packages as needed
