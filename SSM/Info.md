@@ -78,7 +78,7 @@ This will provide the ability to manage and control instances efficiently and se
 
 - **Reference Documentation:** [Monitoring CloudTrail Logs](https://docs.aws.amazon.com/systems-manager/latest/userguide/monitoring-cloudtrail-logs.html)
 
-- Consider using Event Bridge for audit monitoring and sending logs to Slack for review.
+- Consider using Event Bridge for audit monitoring and sending logs to Slack for review. [SSM_Lambda Code](https://github.com/Twodragon0/Lambda/blob/main/SSM/lambda_function.py)
 
 ## Author
 
