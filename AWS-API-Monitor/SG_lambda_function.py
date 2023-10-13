@@ -526,7 +526,7 @@ def lambda_handler(event, context):
         except KeyError as e:
             description = "None"
         
-        IP_Port_Checker(data, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, userName)
+        IP_Port_Checker(event, arn, principalId, accountId, sourceIP, awsRegion, apiTime, groupId, protocol, port, description, ipv4, ipv6, userName)
 
 
 
