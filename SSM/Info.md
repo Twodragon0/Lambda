@@ -64,7 +64,7 @@ This will provide the ability to manage and control instances efficiently and se
 ### SCP (Service Control Policy) :
 
    - Deny SSM actions (such as `StartSession` and `SendCommand`) for all IAM entities except for system-specific IAM entities.
-   - [Example SCP Policy] (https://github.com/Twodragon0/Lambda/blob/7adbfc226d26f3c53b1060d22271cd17efd16f57/SSM/SCP_Policy.json)
+   - [Example SCP Policy](https://github.com/Twodragon0/Lambda/blob/7adbfc226d26f3c53b1060d22271cd17efd16f57/SSM/SCP_Policy.json)
 
 ### Session Encryption (KMS):
 
