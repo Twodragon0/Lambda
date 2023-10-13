@@ -66,7 +66,7 @@ Monitoring Targets:
 ### CloudTrail Changes
 
 **Filter:**
-{ ($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging) }
+{($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging)}
 
 ### IAM Policy Changes
 
@@ -76,12 +76,12 @@ Monitoring Targets:
 ### Console Login Failures
 
 **Filter:**
-{ ($.eventName = ConsoleLogin) && ($.errorMessage = "Failed authentication") }
+{($.eventName = ConsoleLogin) && ($.errorMessage = "Failed authentication")}
 
 ### After-Hours AWS Console Login Success
 
 **CloudWatch Filter:**
-{ ($.eventName = ConsoleLogin) && ($.responseElements.ConsoleLogin = "Success") }
+{($.eventName = ConsoleLogin) && ($.responseElements.ConsoleLogin = "Success")}
 
 ## Note
 Subscription filter has a 1024 character limit. NetworkACL monitoring is pending.
