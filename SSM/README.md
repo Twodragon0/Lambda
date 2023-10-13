@@ -1,86 +1,31 @@
-# Repository Information
+# Project Overview
 
-This repository contains information related to the implementation of Amazon Systems Manager (SSM) on AWS and the associated security measures.
+This repository provides detailed information about two distinct projects, each focusing on specific AWS-related tasks and security measures. Please refer to the following sections for a quick overview of each project.
 
-## Contents
+## Project 1: AWS API Real-time Monitoring
 
-- [Overview](#overview)
-- [Background Knowledge](#background-knowledge)
-- [Usage Plans](#usage-plans)
-- [Security Measures](#security-measures)
+Project 1 aims to enhance security and real-time monitoring of key AWS activities. It focuses on monitoring AWS operations performed via APIs and auditing corresponding CloudTrail logs. The project includes the following key components:
 
-## Overview
+- **Monitoring Flowchart**: Visual representation of the monitoring process.
+- **Monitoring Description**: An explanation of how monitoring works, including the flow of logs from AWS services to CloudWatch and Lambda.
+- **Monitored Targets**: A list of AWS events and actions monitored, including security group configuration changes and KMS key actions.
+- **CloudWatch Events**: Details about CloudWatch Events for specific event patterns.
+- **Lambda Source Code**: Access to the Lambda functions used for forwarding audit-related events.
 
-This document outlines the plan for implementing Amazon System Manager (SSM) and associated security measures. 
-The objective is to enhance the security and operational capabilities of AWS instances by installing the Amazon SSM agent. 
-This will provide the ability to manage and control instances efficiently and securely.
+For installation and configuration instructions, please refer to the [API-Monitor Guide.md](https://github.com/Twodragon0/Lambda/blob/main/AWS-API-Monitor/README.md).
 
+## Project 2: Amazon Systems Manager (SSM) Implementation
 
-## Background Knowledge
+Project 2 focuses on implementing Amazon Systems Manager (SSM) on AWS for efficient instance management and enhanced security. The project includes the following key components:
 
-- Understanding of Amazon Web Services (AWS) infrastructure and IAM roles.
-- Familiarity with AWS Key Management Service (KMS) encryption.
-- Knowledge of SCP (Service Control Policy) and IAM policies.
-- Experience with AWS CloudTrail for monitoring and auditing.
-- Event Bridge usage for auditing and monitoring.
+- **Overview**: An introduction to the purpose and goals of implementing Amazon SSM.
+- **Background Knowledge**: Prerequisite knowledge required for implementing SSM, including AWS infrastructure, IAM roles, KMS encryption, and CloudTrail usage.
+- **Usage Plans**: A detailed plan for installing the Amazon SSM agent on AWS instances and ensuring secure and efficient management. This includes recommendations for IAM roles and security policies.
+- **Security Measures**: Information about implementing security measures, including Service Control Policies (SCP), session encryption, and session logging and monitoring.
 
-## Usage Plans
-
-### Purpose:
-
-- Provide an alternative access method to instances when SSH or hardware issues arise.
-- Facilitate infrastructure vulnerability scanning through Run Command, replacing traditional methods like Ansible.
-- Serve as a potential hardware replacement solution.
-
-### Usage Plan
-
-1. **Installation of `amazon-ssm-agent`:** Install the `amazon-ssm-agent` on all instances requiring SSH access using Ansible. Ensure that the agent version is 3.2.582.0 or later.
-
-2. **Session Manager Preferences Setting:**
-
-   - **KMS Encryption:** Enable KMS encryption using a Session Manager-specific Customer Master Key (CMK).
-   - **S3 Logging:** Activate S3 logging.
-   - **CloudTrail Logging:** Enable CloudTrail logging.
-   - **Shell Profile:** Use `/bin/bash` as the recommended shell profile, with `/bin/sh` as the default shell.
-
-3. **IAM Role or DHMC Configuration for Target Instances:**
-
-   - To enable SSM Control and Data Channel on target instances for run command and session initiation, ensure that the instance's IAM role has the `AmazonSSMManagedInstanceCore` role or follow the DHMC (Default Host Management Configuration) settings for the necessary permissions.
-
-   - [DHMC Configuration](https://aws.amazon.com/ko/blogs/mt/enable-management-of-your-amazon-ec2-instances-in-aws-systems-manager-using-default-host-management-configuration/)
-
-   - Additional Permissions Required: [IAM Instance Profile Creation](https://docs.aws.amazon.com/systems-manager/latest/userguide/getting-started-create-iam-instance-profile.html#create-iam-instance-profile-ssn-logging)
-   -  [IAM policy as an example](https://github.com/Twodragon0/Lambda/blob/7adbfc226d26f3c53b1060d22271cd17efd16f57/SSM/IAM_policy.json)
-
-4. **Considerations:**
-
-   - Ensure that the `amazon-ssm-agent` version is 3.2.582.0 or higher.
-   - IMDSv2 should be optional or required for the instances.
-   - Due to AWS GUI limitations, configurations need to be made via the AWS CLI if using Systems Manager > Fleet Manager.
-   - When KMS encryption is enabled, make sure to grant the necessary `kms:Decrypt` permissions.
-
-## Security Measures
-
-### SCP (Service Control Policy) :
-
-   - Deny SSM actions (such as `StartSession` and `SendCommand`) for all IAM entities except for system-specific IAM entities.
-   - [Example SCP Policy](https://github.com/Twodragon0/Lambda/blob/7adbfc226d26f3c53b1060d22271cd17efd16f57/SSM/SCP_Policy.json)
-
-### Session Encryption (KMS):
-
-- Implement KMS encryption for session data.
-
-- **Reference Documentation:** [Using Parameter Store](https://docs.aws.amazon.com/ko_kr/kms/latest/developerguide/services-parameter-store.html)
-
-### Session Logging and Monitoring:
-
-- Enable session logging and monitoring to ensure access control and audit trails.
-
-- **Reference Documentation:** [Monitoring CloudTrail Logs](https://docs.aws.amazon.com/systems-manager/latest/userguide/monitoring-cloudtrail-logs.html)
-
-- Consider using Event Bridge for audit monitoring and sending logs to Slack for review. [SSM_Lambda Code](https://github.com/Twodragon0/Lambda/blob/main/SSM/lambda_function.py)
+For installation and usage instructions, please refer to the [Lambda for SSM Guide.md](https://github.com/Twodragon0/Lambda/blob/main/SSM/README.md).
 
 ## Author
 
-@twodragon
+This repository is maintained by @twodragon. For questions or further assistance, please reach out to the author.
 
