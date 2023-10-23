@@ -89,5 +89,4 @@ Monitoring Targets:
 ```
 
 ## Note
-Subscription filter has a 1024 character limit. NetworkACL monitoring is pending.
-CloudTrail Configuration
+@Twodragon0
