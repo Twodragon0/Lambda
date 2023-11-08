@@ -6,7 +6,7 @@ AWS operations are carried out through APIs, and the corresponding logs can be m
 ## Progress
 
 ### Monitoring Flowchart
-![Monitoring Flowchart](insert_flowchart_image_link_here)
+![Monitoring Flowchart](config.png)
 
 ### Monitoring Description
 - All API requests generated in each AWS region are stored in Seoul Region S3 through CloudTrail.
